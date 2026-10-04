@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Studio Nails — Painel de Gestão</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Fontes elegantes (Playfair Display + Plus Jakarta Sans + Dancing Script) e Ícones -->
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Playfair+Display:ital,wght@0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            rosebg: '#FFF8F9',
+            rosecard: '#FCE8EC',
+            roseprimary: '#EC8598',
+            rosedark: '#D46A7E',
+            rosetext: '#4A353B',
+            rosemuted: '#9E8289'
+          },
+          fontFamily: {
+            serif: ['"Playfair Display"', 'serif'],
+            script: ['"Dancing Script"', 'cursive'],
+            sans: ['"Plus Jakarta Sans"', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #F7EBEF; font-family: 'Plus Jakarta Sans', sans-serif; color: #4A353B; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="flex justify-center items-center min-h-screen p-0 sm:p-4">
+
+  <!-- CONTAINER MOBILE -->
+  <div class="w-full max-w-[420px] bg-rosebg min-h-screen sm:min-h-[840px] sm:max-h-[860px] sm:rounded-[42px] sm:shadow-2xl sm:border-[8px] sm:border-white flex flex-col justify-between overflow-hidden relative">
+
+    <!-- ==================== 1. TELA DE LOGIN ==================== -->
+    <div id="login-screen" class="absolute inset-0 z-50 bg-rosebg flex flex-col justify-between p-8 text-center transition-all duration-300">
+      <div class="mt-8">
+        <span class="text-xs uppercase tracking-widest text-rosemuted">Painel Administrativo</span>
+      </div>
+
+      <div class="my-auto">
+        <div class="w-36 h-36 mx-auto rounded-full border border-roseprimary/40 bg-rosecard/40 flex flex-col items-center justify-center shadow-inner mb-4">
+          <span class="font-script text-6xl text-roseprimary leading-none">A</span>
+          <span class="text-[10px] tracking-widest uppercase text-rosemuted mt-1">Nail Studio</span>
+        </div>
+        <h1 class="font-serif text-4xl text-roseprimary tracking-wide">Ana Clara</h1>
+        <p class="font-script text-2xl text-rosetext -mt-1">nail's ✨</p>
+        <p class="text-xs text-rosemuted mt-2">Beleza e gestão em cada detalhe</p>
+
+        <div class="mt-8 space-y-3 text-left">
+          <div>
+            <label class="text-xs font-semibold text-rosemuted ml-2">USUÁRIO</label>
+            <input id="login-user" type="text" value="ana" placeholder="Digite seu usuário"
+              class="w-full mt-1 px-4 py-3 rounded-2xl bg-white border border-rosecard focus:outline-none focus:border-roseprimary text-sm" />
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-rosemuted ml-2">SENHA DE ACESSO</label>
+            <input id="login-pass" type="password" value="1234" placeholder="••••"
+              class="w-full mt-1 px-4 py-3 rounded-2xl bg-white border border-rosecard focus:outline-none focus:border-roseprimary text-sm" />
+          </div>
+          <p id="login-error" class="text-xs text-red-500 text-center hidden">Senha incorreta! (Teste: 1234)</p>
+        </div>
+
+        <button onclick="fazerLogin()"
+          class="w-full mt-6 py-3.5 rounded-full bg-roseprimary hover:bg-rosedark text-white font-semibold text-sm shadow-md shadow-roseprimary/30 transition">
+          Entrar no Painel
+        </button>
+      </div>
+
+      <p class="text-[11px] text-rosemuted">Conectado ao Agente WhatsApp & Cal.com</p>
+    </div>
+
+    <!-- ==================== CABEÇALHO DO APP ==================== -->
+    <header class="px-6 pt-6 pb-3 flex items-center justify-between bg-rosebg border-b border-rosecard/60">
+      <div>
+        <p class="text-xs text-rosemuted">Olá, lindeza! 💕</p>
+        <h2 id="header-title" class="font-serif text-xl text-rosetext font-semibold">Agenda de Hoje</h2>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="sincronizarN8N()" id="btn-sync" title="Sincronizar com Cal.com/n8n" class="p-2 rounded-full bg-rosecard/60 text-roseprimary hover:bg-rosecard transition">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+        </button>
+        <button onclick="logout()" title="Bloquear tela" class="p-2 rounded-full bg-rosecard/60 text-rosemuted hover:text-red-500 transition">
+          <i data-lucide="lock" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- ==================== CONTEÚDO DAS ABAS ==================== -->
+    <main class="flex-1 overflow-y-auto px-5 py-4 no-scrollbar space-y-4">
+
+      <!-- Status Global de Sincronização -->
+      <div id="sync-status" class="hidden text-[11px] text-center py-1.5 px-3 rounded-xl bg-rosecard/60 text-rosedark font-medium transition-all">
+        Sincronizando...
+      </div>
+
+      <!-- ABA 1: AGENDA MARCADA (PRINCIPAL) -->
+      <section id="tab-agenda" class="space-y-4">
+        <div class="bg-gradient-to-r from-rosecard to-[#FAD4DC] rounded-3xl p-4 flex items-center justify-between shadow-sm">
+          <div>
+            <span id="data-hoje-badge" class="text-[10px] uppercase tracking-wider font-bold text-rosedark bg-white/70 px-2.5 py-0.5 rounded-full">Agenda Atual</span>
+            <h3 class="font-serif text-lg text-rosetext mt-1.5 leading-snug">Você tem <span id="count-pendentes" class="font-bold text-rosedark">0</span> clientes<br>aguardando ✨</h3>
+          </div>
+          <div class="w-12 h-12 rounded-2xl bg-white/80 flex items-center justify-center text-roseprimary shadow-sm">
+            <i data-lucide="calendar-heart" class="w-6 h-6"></i>
+          </div>
+        </div>
+
+        <!-- Filtros rápidos -->
+        <div class="flex gap-2 text-xs overflow-x-auto no-scrollbar pb-1">
+          <button onclick="filtrarAgenda('todos')" id="filtro-todos" class="px-3.5 py-1.5 rounded-full bg-roseprimary text-white font-medium">Todos</button>
+          <button onclick="filtrarAgenda('agendado')" id="filtro-agendado" class="px-3.5 py-1.5 rounded-full bg-white text-rosemuted border border-rosecard">Agendados</button>
+          <button onclick="filtrarAgenda('concluido')" id="filtro-concluido" class="px-3.5 py-1.5 rounded-full bg-white text-rosemuted border border-rosecard">Concluídos</button>
+          <button onclick="filtrarAgenda('cancelado')" id="filtro-cancelado" class="px-3.5 py-1.5 rounded-full bg-white text-rosemuted border border-rosecard">Cancelados</button>
+        </div>
+
+        <!-- Lista de Cards de Clientes -->
+        <div id="lista-agendamentos" class="space-y-3 pb-4"></div>
+      </section>
+
+      <!-- ABA 2: FECHAR HORÁRIO (BLOQUEIO RÁPIDO) -->
+      <section id="tab-bloqueio" class="hidden space-y-4">
+        <div class="bg-rosecard/50 rounded-2xl p-3.5 text-xs text-rosetext flex items-center gap-3">
+          <i data-lucide="clock" class="w-5 h-5 text-roseprimary shrink-0"></i>
+          <p>Toque nos horários abaixo para <b>fechar</b> (imprevisto/almoço) ou <b>abrir</b> vagas. A IA do WhatsApp será avisada na hora!</p>
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-rosemuted uppercase">Escolha o Dia</label>
+          <div id="seletor-dias" class="grid grid-cols-5 gap-2 mt-2"></div>
+        </div>
+
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <label class="text-xs font-semibold text-rosemuted uppercase">Horários do Dia</label>
+            <div class="flex gap-3">
+              <button onclick="abrirDiaInteiro()" class="text-[11px] text-emerald-600 font-semibold underline">Abrir dia</button>
+              <button onclick="fecharDiaInteiro()" class="text-[11px] text-rosedark font-semibold underline">Fechar dia inteiro</button>
+            </div>
+          </div>
+          <div id="grade-horarios" class="grid grid-cols-3 gap-2.5"></div>
+        </div>
+      </section>
+
+      <!-- ABA 3: CATÁLOGO DE SERVIÇOS -->
+      <section id="tab-catalogo" class="hidden space-y-4">
+        <div class="flex justify-between items-center">
+          <p class="text-xs text-rosemuted">Serviços e preços enviados para a IA:</p>
+          <button onclick="abrirModalServico()" class="px-3 py-1.5 rounded-full bg-roseprimary text-white text-xs font-semibold flex items-center gap-1 shadow-sm">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Novo
+          </button>
+        </div>
+
+        <div id="lista-servicos" class="space-y-2.5"></div>
+      </section>
+
+      <!-- ABA 4: DASHBOARD FINANCEIRO -->
+      <section id="tab-financeiro" class="hidden space-y-4">
+        <div class="bg-gradient-to-br from-roseprimary to-rosedark text-white rounded-3xl p-5 shadow-md">
+          <span class="text-xs uppercase tracking-wider opacity-90">Faturamento Concluído</span>
+          <h3 id="fin-total" class="font-serif text-3xl font-bold mt-1">R$ 0,00</h3>
+          <p id="fin-previsto" class="text-xs opacity-90 mt-2">Previsão com agendados: R$ 0,00</p>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2.5 text-center">
+          <div class="bg-white p-3 rounded-2xl border border-rosecard">
+            <span class="text-[11px] text-rosemuted">Concluídos</span>
+            <p id="fin-count-concluidos" class="font-serif text-xl font-bold text-emerald-600 mt-0.5">0</p>
+          </div>
+          <div class="bg-white p-3 rounded-2xl border border-rosecard">
+            <span class="text-[11px] text-rosemuted">Pendentes</span>
+            <p id="fin-count-agendados" class="font-serif text-xl font-bold text-amber-500 mt-0.5">0</p>
+          </div>
+          <div class="bg-white p-3 rounded-2xl border border-rosecard">
+            <span class="text-[11px] text-rosemuted">Cancelados</span>
+            <p id="fin-count-cancelados" class="font-serif text-xl font-bold text-rose-500 mt-0.5">0</p>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-3xl p-4 border border-rosecard">
+          <h4 class="font-serif text-base font-semibold mb-3">Resumo por Cliente</h4>
+          <div id="fin-lista-resumo" class="space-y-2.5 text-xs"></div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ==================== MODAL ADICIONAR/EDITAR SERVIÇO ==================== -->
+    <div id="modal-servico" class="hidden absolute inset-0 z-40 bg-black/40 backdrop-blur-xs flex items-center justify-center p-5">
+      <div class="bg-rosebg w-full rounded-3xl p-5 shadow-xl border border-rosecard space-y-3">
+        <h3 id="modal-titulo" class="font-serif text-lg font-semibold text-rosetext">Editar Serviço</h3>
+        <input type="hidden" id="serv-id" />
+        <div>
+          <label class="text-xs text-rosemuted font-semibold">NOME DO SERVIÇO</label>
+          <input id="serv-nome" type="text" placeholder="Ex: Banho de Gel" class="w-full mt-1 px-3.5 py-2.5 rounded-xl bg-white border border-rosecard text-sm" />
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-xs text-rosemuted font-semibold">PREÇO (R$)</label>
+            <input id="serv-preco" type="number" placeholder="70" class="w-full mt-1 px-3.5 py-2.5 rounded-xl bg-white border border-rosecard text-sm" />
+          </div>
+          <div>
+            <label class="text-xs text-rosemuted font-semibold">TEMPO (MIN)</label>
+            <input id="serv-tempo" type="number" placeholder="60" class="w-full mt-1 px-3.5 py-2.5 rounded-xl bg-white border border-rosecard text-sm" />
+          </div>
+        </div>
+        <div class="flex gap-2 pt-2">
+          <button onclick="fecharModalServico()" class="flex-1 py-2.5 rounded-full bg-white border border-rosecard text-xs font-semibold text-rosemuted">Cancelar</button>
+          <button onclick="salvarServico()" class="flex-1 py-2.5 rounded-full bg-roseprimary text-white text-xs font-semibold">Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== BARRA DE NAVEGAÇÃO INFERIOR ==================== -->
+    <nav class="bg-white border-t border-rosecard px-4 py-2.5 flex justify-around items-center">
+      <button onclick="mudarAba('agenda')" id="nav-agenda" class="flex flex-col items-center gap-1 text-roseprimary font-semibold">
+        <i data-lucide="calendar-check-2" class="w-5 h-5"></i>
+        <span class="text-[10px]">Agenda</span>
+      </button>
+      <button onclick="mudarAba('bloqueio')" id="nav-bloqueio" class="flex flex-col items-center gap-1 text-rosemuted">
+        <i data-lucide="clock-alert" class="w-5 h-5"></i>
+        <span class="text-[10px]">Fechar Hora</span>
+      </button>
+      <button onclick="mudarAba('catalogo')" id="nav-catalogo" class="flex flex-col items-center gap-1 text-rosemuted">
+        <i data-lucide="sparkles" class="w-5 h-5"></i>
+        <span class="text-[10px]">Catálogo</span>
+      </button>
+      <button onclick="mudarAba('financeiro')" id="nav-financeiro" class="flex flex-col items-center gap-1 text-rosemuted">
+        <i data-lucide="wallet" class="w-5 h-5"></i>
+        <span class="text-[10px]">Financeiro</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- ==================== LÓGICA DO SISTEMA E INTEGRAÇÃO N8N ==================== -->
+  <script>
+    // URLs OFICIAIS DO SEU N8N
+    const N8N_GET_AGENDA_URL = "https://webhook.painellipe.online/webhook/painel-agenda";
+    const N8N_POST_ACAO_URL  = "https://webhook.painellipe.online/webhook/painel-acao";
+
+    // 1. Catálogo de Serviços (Carrega do localStorage ou usa o padrão)
+    const servicosPadrao = [
+      { id: 1, nome: "Manutenção", tempo: 30, preco: 45, slug: "manutencao" },
+      { id: 2, nome: "Manicure Simples", tempo: 45, preco: 35, slug: "manicure-simples" },
+      { id: 3, nome: "Banho de Gel", tempo: 60, preco: 70, slug: "banho-de-gel" }
+    ];
+    let servicos = JSON.parse(localStorage.getItem('manicure_servicos')) || servicosPadrao;
+
+    // Mapa auxiliar para identificar preços pelos nomes vindos do Cal.com
+    function obterPrecoServico(titulo) {
+      if (!titulo) return 45;
+      const t = titulo.toLowerCase();
+      for (const s of servicos) {
+        if (t.includes(s.nome.toLowerCase())) return s.preco;
+      }
+      return 45;
+    }
+
+    // 2. Lista de Agendamentos e Concluídos salvos localmente
+    let agendamentos = [];
+    let concluidosLocal = JSON.parse(localStorage.getItem('manicure_concluidos') || '[]');
+
+    // 3. Gera os próximos 5 dias úteis automaticamente para o Bloqueio Rápido
+    function gerarProximosDias() {
+      const nomesDias = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+      const lista = [];
+      let dataRef = new Date();
+      while (lista.length < 5) {
+        if (dataRef.getDay() !== 0) { // Pula domingo
+          const diaSemana = nomesDias[dataRef.getDay()];
+          const dataStr = dataRef.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+          lista.push({ dia: diaSemana, data: dataStr });
+        }
+        dataRef.setDate(dataRef.getDate() + 1);
+      }
+      return lista;
+    }
+
+    const diasSemana = gerarProximosDias();
+    let diaSelecionado = diasSemana[0].data;
+    const horariosPadrao = ["08:00", "09:00", "10:00", "11:00", "12:00", "14:00", "15:00", "16:00", "17:00", "18:00"];
+    let horariosFechados = JSON.parse(localStorage.getItem('manicure_bloqueios')) || {};
+
+    let filtroAtual = "todos";
+
+    // Atualiza a data no topo
+    const hojeFormatado = new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' });
+    document.getElementById('data-hoje-badge').innerText = hojeFormatado.replace('.', '');
+
+    function mostrarAviso(texto, tempo = 2500) {
+      const statusBox = document.getElementById('sync-status');
+      statusBox.classList.remove('hidden');
+      statusBox.innerText = texto;
+      if (tempo > 0) {
+        setTimeout(() => statusBox.classList.add('hidden'), tempo);
+      }
+    }
+
+    // LOGIN
+    function fazerLogin() {
+      const pass = document.getElementById('login-pass').value;
+      if (pass === "1234") {
+        document.getElementById('login-screen').classList.add('opacity-0', 'pointer-events-none');
+        sincronizarN8N();
+      } else {
+        document.getElementById('login-error').classList.remove('hidden');
+      }
+    }
+
+    function logout() {
+      document.getElementById('login-screen').classList.remove('opacity-0', 'pointer-events-none');
+    }
+
+    // NAVEGAÇÃO ENTRE ABAS
+    function mudarAba(aba) {
+      const titulos = {
+        agenda: "Agenda de Hoje",
+        bloqueio: "Fechar Horários",
+        catalogo: "Nossos Serviços",
+        financeiro: "Dashboard Financeiro"
+      };
+      document.getElementById('header-title').innerText = titulos[aba];
+
+      ['agenda', 'bloqueio', 'catalogo', 'financeiro'].forEach(item => {
+        document.getElementById(`tab-${item}`).classList.add('hidden');
+        const navBtn = document.getElementById(`nav-${item}`);
+        navBtn.classList.remove('text-roseprimary', 'font-semibold');
+        navBtn.classList.add('text-rosemuted');
+      });
+
+      document.getElementById(`tab-${aba}`).classList.remove('hidden');
+      const activeBtn = document.getElementById(`nav-${aba}`);
+      activeBtn.classList.remove('text-rosemuted');
+      activeBtn.classList.add('text-roseprimary', 'font-semibold');
+
+      if (aba === 'financeiro') renderizarFinanceiro();
+      if (aba === 'bloqueio') renderizarBloqueio();
+      if (aba === 'catalogo') renderizarCatalogo();
+      lucide.createIcons();
+    }
+
+    // FUNÇÃO QUE ENVIA BLOQUEIOS E CATÁLOGO PARA A IA GRAVAR NO REDIS
+    async function sincronizarRegrasComIA() {
+      localStorage.setItem('manicure_servicos', JSON.stringify(servicos));
+      localStorage.setItem('manicure_bloqueios', JSON.stringify(horariosFechados));
+      mostrarAviso("🤖 Atualizando memória da IA no WhatsApp...", 0);
+
+      try {
+        await fetch(N8N_POST_ACAO_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            acao: "atualizar_regras",
+            horariosFechados: horariosFechados,
+            catalogo: servicos
+          })
+        });
+        mostrarAviso("✅ IA atualizada com as novas regras!", 2500);
+      } catch (err) {
+        console.error("Erro ao sincronizar regras com a IA:", err);
+        mostrarAviso("⚠️ Salvo no painel (verifique conexão com n8n)", 3000);
+      }
+    }
+
+    // FUNÇÃO QUE BUSCA OS AGENDAMENTOS REAIS DO CAL.COM VIA N8N
+    async function sincronizarN8N() {
+      mostrarAviso("🔄 Sincronizando agenda com o Cal.com...", 0);
+
+      try {
+        const res = await fetch(N8N_GET_AGENDA_URL);
+        const dados = await res.json();
+
+        const bruto = Array.isArray(dados) ? dados[0] : dados;
+        const listaCal = bruto?.data?.bookings || bruto?.bookings || bruto?.data || (Array.isArray(dados) ? dados : []);
+
+        if (Array.isArray(listaCal)) {
+          agendamentos = listaCal.map(b => {
+            const dataObj = new Date(b.start || b.startTime);
+            const horaFormatada = dataObj.toLocaleTimeString('pt-BR', {
+              timeZone: 'America/Fortaleza',
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+            const dataCurta = dataObj.toLocaleDateString('pt-BR', {
+              timeZone: 'America/Fortaleza',
+              day: '2-digit',
+              month: '2-digit'
+            });
+
+            const tituloBruto = b.title || "Manicure Simples";
+            const partesTitulo = tituloBruto.split(' between ');
+            const nomeServico = partesTitulo[0] || "Serviço";
+
+            let nomeCliente = (b.attendees && b.attendees[0] && b.attendees[0].name) ? b.attendees[0].name : "";
+            if (!nomeCliente && partesTitulo[1]) {
+              const nomes = partesTitulo[1].split(/ and | e /i);
+              nomeCliente = nomes[1] || nomes[0];
+            }
+
+            const foneBruto = (b.attendees && b.attendees[0] && b.attendees[0].phoneNumber) || b.responses?.phone || "5598999999999";
+            const foneLimpo = String(foneBruto).replace(/\D/g, '');
+
+            let statusReal = "agendado";
+            if (String(b.status).toLowerCase() === "cancelled" || String(b.status).toLowerCase() === "canceled") {
+              statusReal = "cancelado";
+            } else if (concluidosLocal.includes(b.uid || b.id)) {
+              statusReal = "concluido";
+            }
+
+            return {
+              id: b.id,
+              uid: b.uid,
+              cliente: nomeCliente || "Cliente",
+              telefone: foneLimpo,
+              data: dataCurta,
+              servico: nomeServico,
+              preco: obterPrecoServico(nomeServico),
+              horario: horaFormatada,
+              duracao: `${b.duration || 60}m`,
+              status: statusReal
+            };
+          });
+        }
+
+        mostrarAviso("✅ Agenda sincronizada com sucesso!", 2500);
+        renderizarAgenda();
+        renderizarFinanceiro();
+      } catch (err) {
+        console.error("Erro ao sincronizar com n8n:", err);
+        mostrarAviso("⚠️ Erro ao buscar agenda no Webhook", 3500);
+        renderizarAgenda();
+      }
+    }
+
+    // RENDERIZAR ABA 1: AGENDA
+    function renderizarAgenda() {
+      const container = document.getElementById('lista-agendamentos');
+      const pendentes = agendamentos.filter(a => a.status === 'agendado').length;
+      document.getElementById('count-pendentes').innerText = pendentes;
+
+      const listaFiltrada = agendamentos.filter(a => filtroAtual === 'todos' ? true : a.status === filtroAtual);
+
+      if (listaFiltrada.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white rounded-3xl p-6 border border-rosecard text-center text-xs text-rosemuted">
+            Nenhum agendamento encontrado neste filtro.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = listaFiltrada.map(item => {
+        const badgeStyle = {
+          agendado: "bg-amber-100 text-amber-700",
+          concluido: "bg-emerald-100 text-emerald-700",
+          cancelado: "bg-rose-100 text-rose-700 line-through"
+        }[item.status];
+
+        const badgeTexto = {
+          agendado: "Agendado",
+          concluido: "Concluído ✓",
+          cancelado: "Cancelado"
+        }[item.status];
+
+        return `
+          <div class="bg-white rounded-3xl p-4 border border-rosecard shadow-xs space-y-3">
+            <div class="flex justify-between items-start">
+              <div class="flex items-center gap-3">
+                <div class="bg-rosecard/80 text-rosedark font-serif font-bold px-3 py-2 rounded-2xl text-center leading-tight">
+                  <span class="block text-sm">${item.horario}</span>
+                  <span class="block text-[10px] font-sans font-normal opacity-80">${item.data || 'Hoje'}</span>
+                </div>
+                <div>
+                  <h4 class="font-semibold text-sm text-rosetext">${item.cliente}</h4>
+                  <p class="text-xs text-rosemuted">${item.servico} (${item.duracao}) • <strong class="text-roseprimary">R$ ${item.preco},00</strong></p>
+                </div>
+              </div>
+              <span class="text-[10px] font-semibold px-2.5 py-1 rounded-full ${badgeStyle}">${badgeTexto}</span>
+            </div>
+
+            <!-- Botões de Ação -->
+            <div class="grid grid-cols-3 gap-2 pt-1 border-t border-rosecard/50">
+              <button onclick="mudarStatus('${item.uid}', 'concluido')" class="py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold flex items-center justify-center gap-1 transition">
+                <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Concluir
+              </button>
+              <button onclick="mudarStatus('${item.uid}', 'cancelado')" class="py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold flex items-center justify-center gap-1 transition">
+                <i data-lucide="x-circle" class="w-3.5 h-3.5"></i> Cancelar
+              </button>
+              <button onclick="chamarNoZap('${item.telefone}', '${item.cliente}', '${item.horario}', '${item.servico}')" class="py-2 rounded-xl bg-rosecard/70 hover:bg-roseprimary hover:text-white text-rosedark text-xs font-semibold flex items-center justify-center gap-1 transition">
+                <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> WhatsApp
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    function filtrarAgenda(status) {
+      filtroAtual = status;
+      ['todos', 'agendado', 'concluido', 'cancelado'].forEach(s => {
+        const btn = document.getElementById(`filtro-${s}`);
+        if (s === status) {
+          btn.className = "px-3.5 py-1.5 rounded-full bg-roseprimary text-white font-medium";
+        } else {
+          btn.className = "px-3.5 py-1.5 rounded-full bg-white text-rosemuted border border-rosecard";
+        }
+      });
+      renderizarAgenda();
+    }
+
+    // ATUALIZA STATUS E DISPARA WEBHOOK DE AÇÃO PARA O N8N
+    async function mudarStatus(uid, novoStatus) {
+      const ag = agendamentos.find(a => String(a.uid) === String(uid) || String(a.id) === String(uid));
+      if (!ag) return;
+
+      ag.status = novoStatus;
+
+      if (novoStatus === 'concluido' && !concluidosLocal.includes(ag.uid)) {
+        concluidosLocal.push(ag.uid);
+        localStorage.setItem('manicure_concluidos', JSON.stringify(concluidosLocal));
+      }
+
+      renderizarAgenda();
+      renderizarFinanceiro();
+
+      try {
+        await fetch(N8N_POST_ACAO_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            acao: "atualizar_status",
+            novoStatus: novoStatus,
+            id: ag.id,
+            uid: ag.uid,
+            cliente: ag.cliente,
+            telefone: ag.telefone,
+            servico: ag.servico,
+            horario: ag.horario
+          })
+        });
+      } catch (err) {
+        console.error("Erro ao enviar ação para o n8n:", err);
+      }
+    }
+
+    function chamarNoZap(telefone, nome, horario, servico) {
+      const msg = encodeURIComponent(`Oi ${nome}, tudo bem? 💕 Passando para falar sobre seu horário de *${servico}* às *${horario}* aqui no Studio!`);
+      window.open(`https://wa.me/${telefone}?text=${msg}`, '_blank');
+    }
+
+    // RENDERIZAR ABA 2: FECHAR HORÁRIOS
+    function renderizarBloqueio() {
+      const containerDias = document.getElementById('seletor-dias');
+      containerDias.innerHTML = diasSemana.map(d => {
+        const ativo = d.data === diaSelecionado;
+        return `
+          <button onclick="selecionarDia('${d.data}')" class="p-2.5 rounded-2xl border text-center transition ${ativo ? 'bg-roseprimary text-white border-roseprimary shadow-sm' : 'bg-white text-rosetext border-rosecard'}">
+            <span class="block text-[10px] opacity-80">${d.dia}</span>
+            <span class="font-bold text-xs">${d.data}</span>
+          </button>
+        `;
+      }).join('');
+
+      const fechadosHoje = horariosFechados[diaSelecionado] || [];
+      const containerHoras = document.getElementById('grade-horarios');
+      containerHoras.innerHTML = horariosPadrao.map(hora => {
+        const bloqueado = fechadosHoje.includes(hora);
+        return `
+          <button onclick="alternarBloqueioHora('${hora}')" class="p-3 rounded-2xl border text-xs font-semibold flex items-center justify-between transition ${bloqueado ? 'bg-rose-50 border-rose-200 text-rose-500' : 'bg-white border-rosecard text-rosetext'}">
+            <span>${hora}</span>
+            <i data-lucide="${bloqueado ? 'lock' : 'unlock'}" class="w-3.5 h-3.5"></i>
+          </button>
+        `;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    function selecionarDia(data) {
+      diaSelecionado = data;
+      renderizarBloqueio();
+    }
+
+    function alternarBloqueioHora(hora) {
+      if (!horariosFechados[diaSelecionado]) horariosFechados[diaSelecionado] = [];
+      const idx = horariosFechados[diaSelecionado].indexOf(hora);
+
+      if (idx > -1) {
+        horariosFechados[diaSelecionado].splice(idx, 1);
+      } else {
+        horariosFechados[diaSelecionado].push(hora);
+      }
+      renderizarBloqueio();
+      sincronizarRegrasComIA();
+    }
+
+    function fecharDiaInteiro() {
+      horariosFechados[diaSelecionado] = [...horariosPadrao];
+      renderizarBloqueio();
+      sincronizarRegrasComIA();
+    }
+
+    function abrirDiaInteiro() {
+      horariosFechados[diaSelecionado] = [];
+      renderizarBloqueio();
+      sincronizarRegrasComIA();
+    }
+
+    // RENDERIZAR ABA 3: CATÁLOGO DE SERVIÇOS
+    function renderizarCatalogo() {
+      const container = document.getElementById('lista-servicos');
+      container.innerHTML = servicos.map(s => `
+        <div onclick="abrirModalServico(${s.id})" class="cursor-pointer bg-white hover:bg-rosecard/30 transition rounded-2xl p-4 border border-rosecard flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-rosecard/60 text-roseprimary flex items-center justify-center">
+              <i data-lucide="sparkles" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h4 class="font-semibold text-sm text-rosetext">${s.nome}</h4>
+              <span class="text-xs text-rosemuted">${s.tempo} minutos</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="font-serif font-bold text-roseprimary text-base">R$ ${s.preco},00</span>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-rosemuted"></i>
+          </div>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function abrirModalServico(id = null) {
+      document.getElementById('modal-servico').classList.remove('hidden');
+      if (id) {
+        const s = servicos.find(item => item.id === id);
+        document.getElementById('modal-titulo').innerText = "Editar Serviço";
+        document.getElementById('serv-id').value = s.id;
+        document.getElementById('serv-nome').value = s.nome;
+        document.getElementById('serv-preco').value = s.preco;
+        document.getElementById('serv-tempo').value = s.tempo;
+      } else {
+        document.getElementById('modal-titulo').innerText = "Novo Serviço";
+        document.getElementById('serv-id').value = "";
+        document.getElementById('serv-nome').value = "";
+        document.getElementById('serv-preco').value = "";
+        document.getElementById('serv-tempo').value = "";
+      }
+    }
+
+    function fecharModalServico() {
+      document.getElementById('modal-servico').classList.add('hidden');
+    }
+
+    function salvarServico() {
+      const id = document.getElementById('serv-id').value;
+      const nome = document.getElementById('serv-nome').value;
+      const preco = Number(document.getElementById('serv-preco').value);
+      const tempo = Number(document.getElementById('serv-tempo').value);
+      if (!nome || !preco) return;
+
+      if (id) {
+        const s = servicos.find(item => item.id == id);
+        s.nome = nome; s.preco = preco; s.tempo = tempo;
+      } else {
+        servicos.push({ id: Date.now(), nome, preco, tempo: tempo || 45 });
+      }
+      fecharModalServico();
+      renderizarCatalogo();
+      sincronizarRegrasComIA();
+    }
+
+    // RENDERIZAR ABA 4: FINANCEIRO
+    function renderizarFinanceiro() {
+      const concluidos = agendamentos.filter(a => a.status === 'concluido');
+      const agendados = agendamentos.filter(a => a.status === 'agendado');
+      const cancelados = agendamentos.filter(a => a.status === 'cancelado');
+
+      const somaConcluidos = concluidos.reduce((acc, cur) => acc + cur.preco, 0);
+      const somaPrevista = somaConcluidos + agendados.reduce((acc, cur) => acc + cur.preco, 0);
+
+      document.getElementById('fin-total').innerText = `R$ ${somaConcluidos.toFixed(2).replace('.', ',')}`;
+      document.getElementById('fin-previsto').innerText = `Previsão com agendados: R$ ${somaPrevista.toFixed(2).replace('.', ',')}`;
+
+      document.getElementById('fin-count-concluidos').innerText = concluidos.length;
+      document.getElementById('fin-count-agendados').innerText = agendados.length;
+      document.getElementById('fin-count-cancelados').innerText = cancelados.length;
+
+      const resumoContainer = document.getElementById('fin-lista-resumo');
+      resumoContainer.innerHTML = agendamentos.map(a => `
+        <div class="flex justify-between items-center py-2 border-b border-rosecard/50 last:border-0">
+          <div>
+            <span class="font-semibold text-rosetext">${a.cliente}</span>
+            <span class="block text-[11px] text-rosemuted">${a.servico} • ${a.data || 'Hoje'} às ${a.horario}</span>
+          </div>
+          <span class="font-bold ${a.status === 'concluido' ? 'text-emerald-600' : a.status === 'cancelado' ? 'text-rose-400 line-through' : 'text-amber-600'}">
+            R$ ${a.preco},00
+          </span>
+        </div>
+      `).join('');
+    }
+
+    // Inicialização
+    renderizarAgenda();
+    lucide.createIcons();
+  </script>
+</body>
+</html>
